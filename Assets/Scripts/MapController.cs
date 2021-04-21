@@ -6,25 +6,28 @@ namespace Snake.Map
 {
     public class MapController : MonoBehaviour
     {
+        [SerializeField] SettingsSO settings;
+
         [SerializeField] GameObject scoreSquarePrefab;
         [SerializeField] GameObject obstacleSquarePrefab;
         GameObject spawnedScoreSquare;
         GameObject spawnedObstacleSquare;
         GridSystem gridSystem;
-
         public GridSystem GridSystem
         {
             get { return gridSystem; }
             private set { gridSystem = value; }
         }
 
-        [SerializeField] float xOffset;
-        [SerializeField] float yOffset;
+        [SerializeField,Tooltip("Grid X offset")] float xOffset;
+        [SerializeField, Tooltip("Grid Y offset")] float yOffset;
 
-        string scoreTag = "Score";
-        string obstacleTag = "Obstacle"; //To SO with settings
+        string scoreTag;
+        string obstacleTag;
         void Awake()
         {
+            scoreTag = settings.scoreTag;
+            obstacleTag = settings.obstacleTag;
             gridSystem = new GridSystem(transform.position, xOffset, yOffset);
             spawnedScoreSquare = Instantiate(scoreSquarePrefab);
             spawnedObstacleSquare = Instantiate(obstacleSquarePrefab);
@@ -36,11 +39,11 @@ namespace Snake.Map
         }
         public void SetScoreSquare()
         {
-            spawnedScoreSquare.transform.position = gridSystem.BlockRandomFreeCell(scoreTag);
+            spawnedScoreSquare.transform.position = gridSystem.SetContentInRandomFreeCell(scoreTag);
         }
         public void SetObstacleSquare()
         {
-            spawnedObstacleSquare.transform.position = gridSystem.BlockRandomFreeCell(obstacleTag);
+            spawnedObstacleSquare.transform.position = gridSystem.SetContentInRandomFreeCell(obstacleTag);
         }
     }
 }

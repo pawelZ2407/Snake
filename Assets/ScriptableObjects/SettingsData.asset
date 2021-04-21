@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc45d1195d2e5994e8fb10661a129315, type: 3}
   m_Name: SettingsData
   m_EditorClassIdentifier: 
-  obstacleTag: 
-  playerTag: 
-  scoreTag: 
-  moveTickSpeed: 0
+  obstacleTag: Obstacle
+  playerTag: Player
+  scoreTag: Score
+  moveTickSpeed: 0.5
