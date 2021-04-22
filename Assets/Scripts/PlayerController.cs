@@ -2,46 +2,43 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 using Snake.Map;
 
 namespace Snake.Player
 {
     public class PlayerController : MonoBehaviour
     {
-        [SerializeField]   MapController mapController;
-        [SerializeField]   SettingsSO settings;
+        [SerializeField] private MapController mapController;
+        [SerializeField] private SettingsSO settings;
+        [SerializeField] private TMP_Text scoreText;
+        [SerializeField] private TMP_Text gameOverText;
+        private GridSystem gridSystem;
 
-         GridSystem gridSystem;
+        private LineRenderer lr;
 
-        Vector2 previousHeadPos;
-        Vector2 currentHeadPos;
-        Vector2 headDestination;
+        private readonly List<(int, int)> lrTurnPositions = new List<(int, int)>();
+        private readonly List<Action> moveQueue = new List<Action>();
 
-        Vector2 previousEndPos;
-        Vector2 currentEndPos;
-        Vector2 endDestination;
+        private string playerTag;
+        private string scoreTag;
+        private string obstacleTag;
+        private string wallTag;
 
-         string playerTag;
-         string scoreTag;
-         string obstacleTag;
+        private int column;
+        private int row;
 
-         int column;
-         int row;
+        private int endColumn;
+        private int endRow;
 
-         int endColumn;
-         int endRow;
+        private int currentSnakeLength = 3;
 
-         int currentSnakeLength = 3;
+        private float moveTickSpeed;
+        private float timer;
 
-         float moveTickSpeed;
-         float timer;
+        private int score;
 
-        LineRenderer lr;
-
-        readonly List<(int, int)> lrTurnPositions = new List<(int, int)>();
-        readonly List<Action> moveQueue = new List<Action>();
-
-        enum Direction
+        private enum Direction
         {
             Up,
             Down,
@@ -49,16 +46,14 @@ namespace Snake.Player
             Right
         }
 
-        Direction currentDirection;
-        Direction previousDirection;
+        private Direction currentDirection;
+        private Direction previousDirection;
 
         void Start()
         {
-            gridSystem = mapController.GridSystem;
-            playerTag = settings.playerTag;
-            scoreTag = settings.scoreTag;
-            obstacleTag = settings.obstacleTag;
-            moveTickSpeed = settings.moveTickSpeed;
+            GetSettings();
+
+            scoreText.text = score.ToString();
 
             // Get middle of the map
             column = Mathf.RoundToInt(GridSystem.amountOfColumns / 2);
@@ -69,6 +64,7 @@ namespace Snake.Player
 
             lr = GetComponent<LineRenderer>();
 
+            //SetDirectionWhenStart
             currentDirection = Direction.Right;
             previousDirection = currentDirection;
 
@@ -78,7 +74,6 @@ namespace Snake.Player
             gridSystem.SetGridAsBlocked(column, row, playerTag);
 
             // Initialize first moves to match start snake shape
-
             for (int i = 0; i < currentSnakeLength - 1; i++)
             {
                 moveQueue.Add(MoveSnakeEndRight);
@@ -89,15 +84,21 @@ namespace Snake.Player
         {
             timer += Time.deltaTime;
             InputMove();
-            currentHeadPos = Vector2.Lerp(previousHeadPos, headDestination, moveTickSpeed);
-            currentEndPos = Vector2.Lerp(previousEndPos, endDestination, moveTickSpeed);
-            lr.SetPosition(0, currentEndPos);
-            lr.SetPosition(lr.positionCount - 1, currentHeadPos);
             if (timer >= moveTickSpeed)
             {
                 TickMove();
                 timer = 0;
             }
+        }
+
+        void GetSettings()
+        {
+            gridSystem = mapController.GridSystem;
+            playerTag = settings.playerTag;
+            scoreTag = settings.scoreTag;
+            obstacleTag = settings.obstacleTag;
+            wallTag = settings.wallTag;
+            moveTickSpeed = settings.moveTickSpeed;
         }
         void InputMove()
         {
@@ -120,8 +121,6 @@ namespace Snake.Player
         }
         void TickMove()
         {
-            previousHeadPos = gridSystem.positionsGrid[column, row];
-            previousEndPos = gridSystem.positionsGrid[endColumn, endRow];
             switch (currentDirection)
             {
                 case Direction.Up:
@@ -144,8 +143,7 @@ namespace Snake.Player
             }
 
             GridCellContentInteraction();
-            headDestination = gridSystem.positionsGrid[column, row];
-            endDestination = gridSystem.positionsGrid[endColumn, endRow];
+
             // To prevent 180 degrees turn
             previousDirection = currentDirection;
         }
@@ -167,11 +165,13 @@ namespace Snake.Player
                     gridSystem.SetGridAsBlocked(column, row, playerTag);
 
                     mapController.SetScoreSquare();
-                    Debug.Log("Score!");
+                    currentSnakeLength++;
+                    score++;
+                    scoreText.text = score.ToString();
                 }
                 else if (gridSystem.WhatIsInCell(column, row) == obstacleTag)
                 {
-
+                    currentSnakeLength--;
                     if (moveQueue.Count >= 2)
                     {
                         moveQueue[0].Invoke();
@@ -182,15 +182,16 @@ namespace Snake.Player
                         DeleteTurn();
                         moveQueue.RemoveAt(0);
                     }
-
-                    else
+                    if(currentSnakeLength<3)
                     {
                         GameOver();
                     }
+                    score--;
+                    scoreText.text = score.ToString();
                     mapController.SetObstacleSquare();
 
                 }
-                else if (gridSystem.WhatIsInCell(column, row) == playerTag)
+                else
                 {
                     GameOver();
                 }
@@ -232,25 +233,56 @@ namespace Snake.Player
         {
             SetTurn();
             column--;
-            lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
+            if (column < 0)
+            {
+                GameOver();
+            }
+            else
+            {
+                lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
+            }
         }
         void MoveHeadRight()
         {
             SetTurn();
             column++;
-            lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
+            if (column > GridSystem.amountOfColumns)
+            {
+                GameOver();
+            }
+            else
+            {
+                lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
+            }
+
         }
         void MoveHeadUp()
         {
             SetTurn();
             row--;
-            lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
+            if (row <0)
+            {
+                GameOver();
+            }
+            else
+            {
+                lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
+            }
+           
         }
         void MoveHeadDown()
         {
             SetTurn();
             row++;
-            lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
+            if (row > GridSystem.amountOfRows)
+            {
+                GameOver();
+            }
+            else
+            {
+                lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
+            }
+
         }
         void MoveSnakeEndLeft()
         {
@@ -276,7 +308,8 @@ namespace Snake.Player
 
         void GameOver()
         {
-            Debug.Log("GameOver");
+            timer = 0;
+            gameOverText.gameObject.SetActive(true);
             Time.timeScale = 0;
         }
     }

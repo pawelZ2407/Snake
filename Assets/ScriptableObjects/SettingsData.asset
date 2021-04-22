@@ -15,4 +15,5 @@ MonoBehaviour:
   obstacleTag: Obstacle
   playerTag: Player
   scoreTag: Score
-  moveTickSpeed: 0.5
+  wallTag: Wall
+  moveTickSpeed: 0.25

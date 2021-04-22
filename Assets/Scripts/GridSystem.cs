@@ -9,19 +9,19 @@ namespace Snake.Map
         public const int amountOfColumns = 20;
         public const int amountOfRows = 20;
 
-        Dictionary<(int, int), string> cellsContent = new Dictionary<(int, int), string>();
+        private readonly Dictionary<(int, int), string> cellsContent = new Dictionary<(int, int), string>();
        
         public Vector2[,] positionsGrid = new Vector2[amountOfColumns, amountOfRows];
 
-        public Vector2 middlePosition;
-        public Vector2 topLeftGridPos;
+        private Vector2 middlePosition;
+        private Vector2 topLeftGridPos;
 
-        List<(int, int)> freeCells = new List<(int, int)>();
-        float gridHorSize = 0.5f;
-        float gridVertSize = 0.5f;
+        private List<(int, int)> freeCells = new List<(int, int)>();
+        private float gridHorSize = 0.5f;
+        private float gridVertSize = 0.5f;
 
-        float offsetX = 0;
-        float offsetY = 0;
+        private float offsetX = 0;
+        private float offsetY = 0;
 
         public GridSystem(Vector2 gridMiddle, float xOffset, float yOffset)
         {
@@ -36,11 +36,11 @@ namespace Snake.Map
         private void InitializeGrid()
         {
             topLeftGridPos = new Vector2(middlePosition.x - ((amountOfColumns-1) * gridHorSize) / 2 +offsetX, middlePosition.y + ((amountOfRows-1) * gridVertSize) / 2+offsetY);
-            InitializeContentDictAndFreeCells();
+            InitializeDictsAndLists();
             InitializePositionsGrid();
         }
 
-        private void InitializeContentDictAndFreeCells()
+        private void InitializeDictsAndLists()
         {
             int column = 0;
             int row = 0;
@@ -59,11 +59,10 @@ namespace Snake.Map
                 }
             }
         }
-        public Vector2 SetContentInRandomFreeCell(string content)          // To CHANGE
+        public (int,int) GetRandomFreeCell() 
         {
             (int,int) randomCell = freeCells[Random.Range(0, freeCells.Count)];
-            cellsContent[randomCell] = content;
-            return positionsGrid[randomCell.Item1, randomCell.Item2];
+            return randomCell;
         }
         public void InitializePositionsGrid()
         {
@@ -111,22 +110,27 @@ namespace Snake.Map
         }  
         public string WhatIsInCell(int column, int row)
         {
-            return cellsContent[(column,row)];
+            if (AreIndexesProper(column,row))
+            {
+                return cellsContent[(column, row)];
+            }
+            else
+            {
+                return "Player";
+            }
+
         }
         private bool AreIndexesProper(int column, int row)
         {
-            if (column > amountOfRows - 1 || column < 0)
+            if (column > amountOfColumns  || column < 0)
             {
-                Debug.LogError("Column index is out of range!");
                 return false;
             }
-            if (row > amountOfRows - 1 || row < 0)
+            if (row > amountOfRows  || row < 0)
             {
-                Debug.LogError("Row index is out of range!");
                 return false;
             }
             return true;
         }
     }
-
 }

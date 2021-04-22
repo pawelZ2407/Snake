@@ -8,6 +8,7 @@ public class SettingsSO : ScriptableObject
     public string obstacleTag;
     public string playerTag;
     public string scoreTag;
+    public string wallTag;
 
     public float moveTickSpeed;
 
