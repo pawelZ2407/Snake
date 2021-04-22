@@ -20,6 +20,17 @@ namespace Snake.Player
         private readonly List<(int, int)> lrTurnPositions = new List<(int, int)>();
         private readonly List<Action> moveQueue = new List<Action>();
 
+        private enum Direction
+        {
+            Up,
+            Down,
+            Left,
+            Right
+        }
+
+        private Direction currentDirection;
+        private Direction previousDirection;
+
         private string playerTag;
         private string scoreTag;
         private string obstacleTag;
@@ -38,18 +49,9 @@ namespace Snake.Player
 
         private int score;
 
-        private enum Direction
-        {
-            Up,
-            Down,
-            Left,
-            Right
-        }
 
-        private Direction currentDirection;
-        private Direction previousDirection;
-
-        void Start()
+        #region UnityMethodsAndInit
+        private void Start()
         {
             GetSettings();
 
@@ -80,7 +82,7 @@ namespace Snake.Player
             }
 
         }
-        void Update()
+        private void Update()
         {
             timer += Time.deltaTime;
             InputMove();
@@ -91,7 +93,7 @@ namespace Snake.Player
             }
         }
 
-        void GetSettings()
+        private void GetSettings()
         {
             gridSystem = mapController.GridSystem;
             playerTag = settings.playerTag;
@@ -100,7 +102,8 @@ namespace Snake.Player
             wallTag = settings.wallTag;
             moveTickSpeed = settings.moveTickSpeed;
         }
-        void InputMove()
+        #endregion;
+        private void InputMove()
         {
                 if (Input.GetKeyDown(KeyCode.W) && previousDirection != Direction.Down)
                 {
@@ -119,24 +122,44 @@ namespace Snake.Player
                     currentDirection = Direction.Right;
                 }
         }
-        void TickMove()
+        private void TickMove()
         {
             switch (currentDirection)
             {
                 case Direction.Up:
+                    if (row <= 0)
+                    {
+                        GameOver();
+                        return;
+                    }
+
                     moveQueue.Add(MoveSnakeEndUp);
                     MoveHeadUp();
                     break;
                 case Direction.Down:
+                    if (row >= GridSystem.amountOfRows-1)
+                    {
+                        GameOver();
+                        return;
+                    }
                     moveQueue.Add(MoveSnakeEndDown);
                     MoveHeadDown();
                     break;
                 case Direction.Left:
+                    if (column <= 0)
+                    {
+                        GameOver();
+                        return;
+                    }
                     moveQueue.Add(MoveSnakeEndLeft);
                     MoveHeadLeft();
                     break;
                 case Direction.Right:
-
+                    if (column >= GridSystem.amountOfColumns-1)
+                    {
+                        GameOver();
+                        return;
+                    }
                     moveQueue.Add(MoveSnakeEndRight);
                     MoveHeadRight();
                     break;
@@ -147,7 +170,8 @@ namespace Snake.Player
             // To prevent 180 degrees turn
             previousDirection = currentDirection;
         }
-        void GridCellContentInteraction()
+        // Collision handler 
+        private void GridCellContentInteraction()
         {
 
             if (gridSystem.WhatIsInCell(column, row) == null)
@@ -174,13 +198,15 @@ namespace Snake.Player
                     currentSnakeLength--;
                     if (moveQueue.Count >= 2)
                     {
+                        gridSystem.SetGridAsFree(endColumn, endRow);
                         moveQueue[0].Invoke();
                         DeleteTurn();
                         moveQueue.RemoveAt(0);
-
+                        gridSystem.SetGridAsFree(endColumn, endRow);
                         moveQueue[0].Invoke();
                         DeleteTurn();
                         moveQueue.RemoveAt(0);
+                        gridSystem.SetGridAsFree(endColumn, endRow);
                     }
                     if(currentSnakeLength<3)
                     {
@@ -188,17 +214,18 @@ namespace Snake.Player
                     }
                     score--;
                     scoreText.text = score.ToString();
+                    gridSystem.SetGridAsFree(column, row);
                     mapController.SetObstacleSquare();
 
                 }
-                else
+                else if(gridSystem.WhatIsInCell(column, row) == wallTag || gridSystem.WhatIsInCell(column, row) == playerTag)
                 {
                     GameOver();
                 }
             }
         }
-        #region DirectionMoveMethods
-        void SetTurn()
+        #region MoveMethods
+        private void SetTurn()
         {
             if (currentDirection != previousDirection)
             {
@@ -208,7 +235,7 @@ namespace Snake.Player
             }
 
         }
-        void DeleteTurn()
+        private void DeleteTurn()
         {
             if (lrTurnPositions.Count > 0)
             {
@@ -229,85 +256,60 @@ namespace Snake.Player
             }
         }
 
-        void MoveHeadLeft()
+        private void MoveHeadLeft()
         {
             SetTurn();
+
             column--;
-            if (column < 0)
-            {
-                GameOver();
-            }
-            else
-            {
                 lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
-            }
         }
-        void MoveHeadRight()
+        private void MoveHeadRight()
         {
             SetTurn();
+
             column++;
-            if (column > GridSystem.amountOfColumns)
-            {
-                GameOver();
-            }
-            else
-            {
-                lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
-            }
-
+            lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
         }
-        void MoveHeadUp()
+        private void MoveHeadUp()
         {
             SetTurn();
+   
+
             row--;
-            if (row <0)
-            {
-                GameOver();
-            }
-            else
-            {
-                lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
-            }
-           
+             lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
         }
-        void MoveHeadDown()
+        private void MoveHeadDown()
         {
             SetTurn();
-            row++;
-            if (row > GridSystem.amountOfRows)
-            {
-                GameOver();
-            }
-            else
-            {
-                lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
-            }
 
+            row++;
+            lr.SetPosition(lr.positionCount - 1, gridSystem.positionsGrid[column, row]);
         }
-        void MoveSnakeEndLeft()
+        private void MoveSnakeEndLeft()
         {
             endColumn--;
             lr.SetPosition(0, gridSystem.positionsGrid[endColumn, endRow]);
         }
-        void MoveSnakeEndRight()
+        private void MoveSnakeEndRight()
         {
             endColumn++;
             lr.SetPosition(0, gridSystem.positionsGrid[endColumn, endRow]);
         }
-        void MoveSnakeEndUp()
+        private void MoveSnakeEndUp()
         {
             endRow--;
             lr.SetPosition(0, gridSystem.positionsGrid[endColumn, endRow]);
         }
-        void MoveSnakeEndDown()
+        private void MoveSnakeEndDown()
         {
             endRow++;
             lr.SetPosition(0, gridSystem.positionsGrid[endColumn, endRow]);
         }
         #endregion;
 
-        void GameOver()
+        private void GameOver()
         {
+            Debug.Log("Dead reason: " + gridSystem.WhatIsInCell(column, row));
             timer = 0;
             gameOverText.gameObject.SetActive(true);
             Time.timeScale = 0;

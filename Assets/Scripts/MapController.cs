@@ -24,8 +24,10 @@ namespace Snake.Map
             private set { gridSystem = value; }
         }
 
-        [SerializeField, Tooltip("Grid X offset")] float xOffset;
-        [SerializeField, Tooltip("Grid Y offset")] float yOffset;
+        [SerializeField, Tooltip("Grid X offset")] 
+        private float xOffset;
+        [SerializeField, Tooltip("Grid Y offset")]
+        private float yOffset;
 
         private string scoreTag;
         private string obstacleTag;
@@ -56,20 +58,6 @@ namespace Snake.Map
             SetObstacleSquare();
 
         }
-        public void SetScoreSquare()
-        {
-            (int, int) randomCoords = gridSystem.GetRandomFreeCell();
-            spawnedScoreSquare.transform.position = gridSystem.positionsGrid[randomCoords.Item1, randomCoords.Item2];
-            gridSystem.SetGridAsBlocked(randomCoords.Item1, randomCoords.Item2 ,scoreTag);
-            SetRandomWalls(wallsToSpawnPerScore);
-        }
-        public void SetObstacleSquare()
-        {
-            (int, int) randomCoords = gridSystem.GetRandomFreeCell();
-            spawnedObstacleSquare.transform.position = gridSystem.positionsGrid[randomCoords.Item1, randomCoords.Item2];
-
-            gridSystem.SetGridAsBlocked(randomCoords.Item1, randomCoords.Item2, obstacleTag);
-        }
         private void SetRandomWalls(int amountOfWalls)
         {
             DeleteWalls();
@@ -98,5 +86,20 @@ namespace Snake.Map
 
             }
         }
+        public void SetScoreSquare()
+        {
+            (int, int) randomCoords = gridSystem.GetRandomFreeCell();
+            spawnedScoreSquare.transform.position = gridSystem.positionsGrid[randomCoords.Item1, randomCoords.Item2];
+            gridSystem.SetGridAsBlocked(randomCoords.Item1, randomCoords.Item2 ,scoreTag);
+            SetRandomWalls(wallsToSpawnPerScore);
+        }
+        public void SetObstacleSquare()
+        {
+            (int, int) randomCoords = gridSystem.GetRandomFreeCell();
+            spawnedObstacleSquare.transform.position = gridSystem.positionsGrid[randomCoords.Item1, randomCoords.Item2];
+
+            gridSystem.SetGridAsBlocked(randomCoords.Item1, randomCoords.Item2, obstacleTag);
+        }
+       
     }
 }

@@ -59,12 +59,19 @@ namespace Snake.Map
                 }
             }
         }
-        public (int,int) GetRandomFreeCell() 
+        private bool AreIndexesProper(int column, int row)
         {
-            (int,int) randomCell = freeCells[Random.Range(0, freeCells.Count)];
-            return randomCell;
+            if (column > amountOfColumns || column < 0)
+            {
+                return false;
+            }
+            if (row > amountOfRows || row < 0)
+            {
+                return false;
+            }
+            return true;
         }
-        public void InitializePositionsGrid()
+        private void InitializePositionsGrid()
         {
             int column = 0;
             int row = 0;
@@ -85,7 +92,12 @@ namespace Snake.Map
             Debug.Log("EndPos: " + positionsGrid[amountOfColumns - 1, amountOfRows - 1]);
 
         }
-   
+        public (int,int) GetRandomFreeCell() 
+        {
+            (int,int) randomCell = freeCells[Random.Range(0, freeCells.Count)];
+            return randomCell;
+        }
+
         public void SetGridAsBlocked(int column, int row, string content)
         {
             if (AreIndexesProper(column, row))
@@ -120,17 +132,6 @@ namespace Snake.Map
             }
 
         }
-        private bool AreIndexesProper(int column, int row)
-        {
-            if (column > amountOfColumns  || column < 0)
-            {
-                return false;
-            }
-            if (row > amountOfRows  || row < 0)
-            {
-                return false;
-            }
-            return true;
-        }
+
     }
 }
